@@ -8,10 +8,10 @@ from pathlib import Path
 import cv2
 import numpy as np
 from deep_translator import GoogleTranslator
-from fastapi import FastAPI, File, HTTPException, Query, UploadFile
+from fastapi import FastAPI, File,Form, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
-from rapidocr import RapidOCR
+from rapidocr_onnxruntime import RapidOCR
 from sentence_transformers import SentenceTransformer
 
 app = FastAPI(title="Dharohar AI API", version="0.3.0")
@@ -73,7 +73,6 @@ RECORDS = [
     ),
 ]
 
-
 def get_database_connection():
     DATA_FOLDER.mkdir(exist_ok=True)
 
@@ -103,7 +102,16 @@ def get_database_connection():
         )
         connection.commit()
 
+    if "latitude" not in columns:
+        connection.execute("ALTER TABLE uploads ADD COLUMN latitude REAL")
+        connection.execute("ALTER TABLE uploads ADD COLUMN longitude REAL")
+        connection.execute("ALTER TABLE uploads ADD COLUMN location_name TEXT")
+        connection.commit()
+
     return connection
+
+
+
 
 
 def create_embedding(text: str) -> list[float]:
@@ -164,37 +172,28 @@ def save_upload(
     translated_text: str,
     summary: str,
     embedding: list[float],
+    latitude: float = None,
+    longitude: float = None,
+    location_name: str = None,
 ) -> int:
     connection = get_database_connection()
-
     cursor = connection.execute(
         """
         INSERT INTO uploads (
-            file_name,
-            extracted_text,
-            translated_text,
-            summary,
-            created_at,
-            embedding
+            file_name, extracted_text, translated_text, summary, 
+            created_at, embedding, latitude, longitude, location_name
         )
-        VALUES (?, ?, ?, ?, ?, ?)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         """,
         (
-            file_name,
-            extracted_text,
-            translated_text,
-            summary,
-            datetime.now().isoformat(),
-            json.dumps(embedding),
+            file_name, extracted_text, translated_text, summary,
+            datetime.now().isoformat(), json.dumps(embedding),
+            latitude, longitude, location_name
         ),
     )
-
     connection.commit()
-
     upload_id = cursor.lastrowid
-
     connection.close()
-
     return upload_id
 
 
@@ -209,16 +208,40 @@ def get_heritage_records():
 
 
 @app.post("/api/analyse-upload")
-async def analyse_upload(file: UploadFile = File(...)):
-    if file.content_type == "application/pdf":
-        return {
-            "file_name": file.filename,
-            "suggested_type": "PDF document",
-            "summary": "PDF support is the next step. Please upload an image scan for live OCR.",
-            "suggested_tags": ["document", "needs PDF conversion"],
-            "extracted_text": "",
-            "translated_text": "",
-        }
+async def analyse_upload(
+    file: UploadFile = File(...),
+    latitude: float = Form(None),
+    longitude: float = Form(None),
+    location_name: str = Form(None)
+):
+    # ... existing PDF check and image decoding code ...
+
+    # ... existing OCR, translation, and embedding code ...
+
+    upload_id = save_upload(
+        file_name=file.filename,
+        extracted_text=text,
+        translated_text=translated_text,
+        summary=summary,
+        embedding=embedding,
+        latitude=latitude,
+        longitude=longitude,
+        location_name=location_name
+    )
+
+    return {
+        "file_name": file.filename,
+        "suggested_type": "Heritage photograph or scanned document",
+        "summary": summary,
+        "suggested_tags": ["heritage", "OCR extracted", "needs review"],
+        "extracted_text": text,
+        "translated_text": translated_text,
+        "record_id": upload_id,
+        "confidence_scores": scores,
+        "latitude": latitude,
+        "longitude": longitude,
+        "location_name": location_name
+    }
 
     content = await file.read()
 
@@ -275,23 +298,16 @@ async def analyse_upload(file: UploadFile = File(...)):
 @app.get("/api/uploads")
 def get_saved_uploads():
     connection = get_database_connection()
-
     uploads = connection.execute(
         """
         SELECT
-            id,
-            file_name,
-            extracted_text,
-            translated_text,
-            summary,
-            created_at
+            id, file_name, extracted_text, translated_text, 
+            summary, created_at, latitude, longitude, location_name
         FROM uploads
         ORDER BY id DESC
         """
     ).fetchall()
-
     connection.close()
-
     return [dict(upload) for upload in uploads]
 
 

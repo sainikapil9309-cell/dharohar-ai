@@ -22,6 +22,8 @@ type HeritageRecord = any;
   translated_text: string;
   summary: string;
   created_at: string;
+  latitude?: number;
+  longitude?: number;
 };
 
 const HeritageMap = dynamic(
@@ -61,8 +63,23 @@ export default function Home() {
   async function analyseUpload() {
     if (!file) return;
     setLoading(true);
+    
     const formData = new FormData();
     formData.append("file", file);
+
+    // Attempt to get the user's current location before uploading
+    try {
+      const position = await new Promise<GeolocationPosition>((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject);
+      });
+      
+      formData.append("latitude", position.coords.latitude.toString());
+      formData.append("longitude", position.coords.longitude.toString());
+      formData.append("location_name", "User Upload Location");
+    } catch (error) {
+      console.warn("Geolocation denied or unavailable. Uploading without location.", error);
+    }
+
     try {
       const response = await fetch("http://127.0.0.1:8000/api/analyse-upload", {
         method: "POST",
@@ -70,12 +87,13 @@ export default function Home() {
       });
       const data = await response.json();
 
-setAnalysis(data);
+      setAnalysis(data);
 
-const savedResponse = await fetch("http://127.0.0.1:8000/api/uploads");
-const savedData = await savedResponse.json();
-
-setSavedUploads(savedData);
+      // Refresh the saved uploads list after a successful new upload
+      const savedResponse = await fetch("http://127.0.0.1:8000/api/uploads");
+      const savedData = await savedResponse.json();
+      setSavedUploads(savedData);
+      
     } catch {
       setAnalysis({
         file_name: file.name,
@@ -201,7 +219,7 @@ setSavedUploads(savedData);
     Digitised heritage records
   </h2>
 
-  <section className="mx-auto max-w-6xl px-6 pb-12">
+ <section className="mx-auto max-w-6xl px-6 pb-12">
   <p className="text-sm font-bold uppercase tracking-wider text-amber-700">
     Explore geographically
   </p>
@@ -210,7 +228,7 @@ setSavedUploads(savedData);
     Heritage map
   </h2>
 
-  <HeritageMap records={heritageRecords} />
+  <HeritageMap records={[...heritageRecords, ...savedUploads.filter(u => u.latitude && u.longitude)]} />
 </section>
 
 
