@@ -47,6 +47,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+os.environ["HF_HUB_OFFLINE"] = "1"
+os.environ["TRANSFORMERS_OFFLINE"] = "1"
 ocr_engine = RapidOCR()
 embedding_model = SentenceTransformer("all-MiniLM-L6-v2")
 
@@ -466,8 +468,10 @@ def run_ocr(images: list[np.ndarray]) -> tuple[str, list[float]]:
         try:
             res = ocr_engine(img)
             if res:
-                rapid_text = "\n".join(res.txts or [])
-                rapid_scores = [round(float(s), 2) for s in (res.scores or [])]
+                boxes = res[0] if (isinstance(res, (tuple, list)) and len(res) > 0 and isinstance(res[0], list)) else res
+                if isinstance(boxes, list):
+                    rapid_text = "\n".join([str(item[1]) for item in boxes if len(item) > 1 and item[1]])
+                    rapid_scores = [round(float(item[2]), 2) for item in boxes if len(item) > 2]
         except Exception:
             pass
 
