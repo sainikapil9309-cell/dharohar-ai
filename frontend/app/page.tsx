@@ -11,6 +11,7 @@ type Analysis = {
   extracted_text?: string;
   confidence_scores?: number[];
   translated_text?: string;
+  hindi_translation?: string;
   latitude?: number;
   longitude?: number;
   location_name?: string;
@@ -35,6 +36,7 @@ type SavedUpload = {
   file_name: string;
   extracted_text: string;
   translated_text: string;
+  hindi_translation?: string;
   summary: string;
   created_at: string;
   latitude?: number;
@@ -1706,19 +1708,50 @@ export default function Home() {
 
           {analysis && (
             <div className="mt-6 rounded-2xl border border-stone-200 bg-white p-6 shadow-sm">
-              <h3 className="font-serif text-lg font-bold text-stone-900">{analysis.file_name}</h3>
-              <p className="mt-2 text-xs leading-relaxed text-stone-700">{analysis.summary}</p>
-              <div className="mt-4 grid gap-4 sm:grid-cols-2">
+              <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-stone-100 pb-3">
+                <div>
+                  <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Heritage Epigraphy & Transcription</span>
+                  <h3 className="font-serif text-lg font-bold text-stone-900">{analysis.file_name}</h3>
+                </div>
+                {analysis.suggested_type && (
+                  <span className="self-start sm:self-center rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-900">
+                    🏛️ {analysis.suggested_type}
+                  </span>
+                )}
+              </div>
+
+              {/* Short Historical & Architectural Explanation */}
+              <div className="mt-4 rounded-xl bg-amber-50/50 border border-amber-200/80 p-4">
+                <p className="text-[11px] font-bold uppercase tracking-wider text-amber-900">
+                  🏛️ Short Explanation & Historical Significance
+                </p>
+                <p className="mt-1.5 text-xs leading-relaxed text-stone-800">{analysis.summary}</p>
+              </div>
+
+              {/* Detected Text, English Translation, and Hindi Translation Grid */}
+              <div className="mt-4 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
                 {analysis.extracted_text && (
-                  <div className="rounded-xl border border-stone-200 bg-stone-50 p-4">
-                    <p className="text-[11px] font-bold uppercase text-amber-800">Detected Inscription</p>
-                    <p className="mt-2 text-xs leading-relaxed text-stone-800 whitespace-pre-wrap">{analysis.extracted_text}</p>
+                  <div className="rounded-xl border border-stone-200 bg-stone-50/80 p-4">
+                    <p className="text-[11px] font-bold uppercase text-stone-600">📜 Detected Inscription / Text</p>
+                    <p className="mt-2 text-xs leading-relaxed text-stone-900 whitespace-pre-wrap font-serif">
+                      {analysis.extracted_text}
+                    </p>
                   </div>
                 )}
                 {analysis.translated_text && (
-                  <div className="rounded-xl border border-amber-200 bg-amber-50/50 p-4">
-                    <p className="text-[11px] font-bold uppercase text-amber-900">English Translation</p>
-                    <p className="mt-2 text-xs leading-relaxed text-stone-800 whitespace-pre-wrap">{analysis.translated_text}</p>
+                  <div className="rounded-xl border border-amber-200 bg-white p-4 shadow-2xs">
+                    <p className="text-[11px] font-bold uppercase text-amber-800">🇬🇧 English Translation</p>
+                    <p className="mt-2 text-xs leading-relaxed text-stone-800 whitespace-pre-wrap">
+                      {analysis.translated_text}
+                    </p>
+                  </div>
+                )}
+                {analysis.hindi_translation && (
+                  <div className="rounded-xl border border-emerald-200 bg-white p-4 shadow-2xs">
+                    <p className="text-[11px] font-bold uppercase text-emerald-800">🇮🇳 Hindi Translation (हिंदी अनुवाद)</p>
+                    <p className="mt-2 text-xs leading-relaxed text-stone-800 whitespace-pre-wrap font-serif">
+                      {analysis.hindi_translation}
+                    </p>
                   </div>
                 )}
               </div>
