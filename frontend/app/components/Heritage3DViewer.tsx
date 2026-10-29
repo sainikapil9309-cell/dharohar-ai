@@ -222,7 +222,8 @@ export default function Heritage3DViewer({
         const formData = new FormData();
         formData.append("image_url", imageUrl);
 
-        const resp = await fetch("http://127.0.0.1:8000/api/depth-estimate", {
+        const apiBase = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+        const resp = await fetch(`${apiBase}/api/depth-estimate`, {
           method: "POST",
           body: formData,
         });

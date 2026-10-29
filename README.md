@@ -376,6 +376,43 @@ cd dharohar-ai-1
 
 ---
 
+---
+
+## 🌐 Production Deployment Guide (Free Tier)
+
+Dharohar AI is production-ready and architected for seamless two-tier cloud deployment:
+- **Backend API**: Hosted on **Render.com** / **Railway.app** (Docker / Python)
+- **Frontend Dashboard**: Hosted on **Vercel** (Global Edge CDN)
+
+### Option 1: Deploy Backend on Render.com (Free)
+
+1. Sign up / Log in to [Render.com](https://render.com) and click **New +** -> **Web Service**.
+2. Connect your public GitHub repository (dharohar-ai-1).
+3. Configure the service settings:
+   - **Name**: dharohar-ai-backend
+   - **Root Directory**: ackend
+   - **Environment / Runtime**: Docker *(Recommended - uses ackend/Dockerfile)*
+   - **Instance Type**: Free
+4. Click **Deploy Web Service**.
+5. Once deployed, copy your live backend URL (e.g. https://dharohar-ai-backend.onrender.com).
+
+---
+
+### Option 2: Deploy Frontend on Vercel (Free)
+
+1. Sign up / Log in to [Vercel](https://vercel.com) and click **Add New...** -> **Project**.
+2. Import your GitHub repository (dharohar-ai-1).
+3. In project configuration:
+   - **Framework Preset**: Next.js
+   - **Root Directory**: Click *Edit* and select rontend
+4. Expand **Environment Variables** and add:
+   - **Key**: NEXT_PUBLIC_API_URL
+   - **Value**: Your live backend URL from Render (e.g. https://dharohar-ai-backend.onrender.com)
+5. Click **Deploy**.
+6. Within ~60 seconds, your application will be live at https://dharohar-ai.vercel.app!
+
+---
+
 ## 📜 License & Acknowledgments
 - Developed for **Cultural Heritage Preservation & Open Innovation**.
 - Powered by open-source technologies: **FastAPI**, **Next.js**, **Three.js**, **Leaflet**, and **HuggingFace Sentence-Transformers**.

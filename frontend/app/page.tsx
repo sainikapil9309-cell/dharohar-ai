@@ -1006,16 +1006,18 @@ export default function Home() {
     refreshData();
   }, []);
 
+  const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000";
+
   const refreshData = async () => {
     try {
       const [heritageRes, uploadsRes] = await Promise.all([
-        fetch("http://127.0.0.1:8000/api/heritage"),
-        fetch("http://127.0.0.1:8000/api/uploads"),
+        fetch(`${API_BASE_URL}/api/heritage`),
+        fetch(`${API_BASE_URL}/api/uploads`),
       ]);
       if (heritageRes.ok) setHeritageRecords(await heritageRes.json());
       if (uploadsRes.ok) setSavedUploads(await uploadsRes.json());
     } catch (err) {
-      console.warn("Backend not reached on http://127.0.0.1:8000", err);
+      console.warn(`Backend not reached on ${API_BASE_URL}`, err);
     }
   };
 
@@ -1052,7 +1054,7 @@ export default function Home() {
       setTimeout(() => setProcessingStage("Running Devanagari OCR & local translation..."), 700);
       setTimeout(() => setProcessingStage("Extracting architectural tags & computing embeddings..."), 1500);
 
-      const response = await fetch("http://127.0.0.1:8000/api/analyse-upload", {
+      const response = await fetch(`${API_BASE_URL}/api/analyse-upload`, {
         method: "POST",
         body: formData,
       });
@@ -1085,7 +1087,7 @@ export default function Home() {
     setIsSearching(true);
     try {
       const response = await fetch(
-        `http://127.0.0.1:8000/api/search?q=${encodeURIComponent(searchQuery)}`
+        `${API_BASE_URL}/api/search?q=${encodeURIComponent(searchQuery)}`
       );
       if (response.ok) {
         const data = await response.json();
