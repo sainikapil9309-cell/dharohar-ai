@@ -109,6 +109,11 @@ const HeritageMap = dynamic(
   { ssr: false }
 );
 
+const Heritage3DViewer = dynamic(
+  () => import("./components/Heritage3DViewer"),
+  { ssr: false }
+);
+
 // Comprehensive Encyclopedia of Places Organized by State with 100% Unique Local Archival Assets
 const ALL_HERITAGE_PLACES: HeritagePlaceEntry[] = [
   // --- RAJASTHAN ---
@@ -984,6 +989,19 @@ export default function Home() {
   const [selectedCoords, setSelectedCoords] = useState<{ lat: number; lng: number } | null>(null);
   const [isPickerActive, setIsPickerActive] = useState(false);
 
+  // 3D Spatial View State
+  const [viewer3D, setViewer3D] = useState<{
+    isOpen: boolean;
+    imageUrl: string;
+    title: string;
+    subtitle?: string;
+    initialDepthMapUrl?: string;
+  }>({
+    isOpen: false,
+    imageUrl: "",
+    title: "",
+  });
+
   useEffect(() => {
     refreshData();
   }, []);
@@ -1382,6 +1400,20 @@ export default function Home() {
                 <p className="mt-3 text-xs leading-relaxed text-stone-700">
                   {currentPlace.spotlight.pastImage.caption}
                 </p>
+                <button
+                  onClick={() =>
+                    setViewer3D({
+                      isOpen: true,
+                      imageUrl: currentPlace.spotlight.pastImage.url,
+                      title: `${currentPlace.name} (Archival Era)`,
+                      subtitle: `Monocular 3D spatial perspective of historic archival photography • ${currentPlace.spotlight.pastImage.era}`,
+                    })
+                  }
+                  className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-stone-200 bg-white px-3 py-2 text-xs font-semibold text-stone-800 shadow-2xs hover:bg-stone-100 hover:border-amber-300 transition"
+                >
+                  <span>🌐</span>
+                  <span>Explore 3D Spatial View</span>
+                </button>
               </div>
 
               {/* Present Image Card */}
@@ -1405,6 +1437,20 @@ export default function Home() {
                 <p className="mt-3 text-xs leading-relaxed text-stone-700">
                   {currentPlace.spotlight.presentImage.caption}
                 </p>
+                <button
+                  onClick={() =>
+                    setViewer3D({
+                      isOpen: true,
+                      imageUrl: currentPlace.spotlight.presentImage.url,
+                      title: `${currentPlace.name} (Present Day)`,
+                      subtitle: `Monocular 3D depth mesh, point cloud & panorama • ${currentPlace.location}, ${currentPlace.state}`,
+                    })
+                  }
+                  className="mt-3.5 inline-flex w-full items-center justify-center gap-2 rounded-xl border border-amber-300 bg-amber-500/10 px-3 py-2 text-xs font-bold text-amber-900 shadow-2xs hover:bg-amber-500/20 hover:border-amber-400 transition"
+                >
+                  <span>🌐</span>
+                  <span>Explore 3D Spatial View</span>
+                </button>
               </div>
             </div>
           </div>
@@ -1713,11 +1759,30 @@ export default function Home() {
                   <span className="text-[10px] font-bold uppercase tracking-wider text-amber-700">Heritage Epigraphy & Transcription</span>
                   <h3 className="font-serif text-lg font-bold text-stone-900">{analysis.file_name}</h3>
                 </div>
-                {analysis.suggested_type && (
-                  <span className="self-start sm:self-center rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-900">
-                    🏛️ {analysis.suggested_type}
-                  </span>
-                )}
+                <div className="flex flex-wrap items-center gap-2">
+                  {file && (
+                    <button
+                      onClick={() => {
+                        const previewUrl = URL.createObjectURL(file);
+                        setViewer3D({
+                          isOpen: true,
+                          imageUrl: previewUrl,
+                          title: analysis.file_name,
+                          subtitle: `Monocular 3D spatial reconstruction of uploaded inscription • ${analysis.suggested_type || "Heritage Artifact"}`,
+                        });
+                      }}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-amber-600 hover:bg-amber-700 px-3 py-1 text-xs font-semibold text-white shadow-xs transition"
+                    >
+                      <span>🌐</span>
+                      <span>Explore in 3D</span>
+                    </button>
+                  )}
+                  {analysis.suggested_type && (
+                    <span className="self-start sm:self-center rounded-full bg-amber-50 border border-amber-200 px-3 py-1 text-xs font-semibold text-amber-900">
+                      🏛️ {analysis.suggested_type}
+                    </span>
+                  )}
+                </div>
               </div>
 
               {/* Short Historical & Architectural Explanation */}
@@ -1812,6 +1877,17 @@ export default function Home() {
         <p className="font-serif text-sm font-semibold text-stone-800">Dharohar AI</p>
         <p className="mt-1">Preserving India’s cultural heritage through open-source AI & geospatial indexing.</p>
       </footer>
+
+      {/* Lightweight Monocular 3D Spatial Viewer Modal */}
+      {viewer3D.isOpen && (
+        <Heritage3DViewer
+          imageUrl={viewer3D.imageUrl}
+          title={viewer3D.title}
+          subtitle={viewer3D.subtitle}
+          initialDepthMapUrl={viewer3D.initialDepthMapUrl}
+          onClose={() => setViewer3D((prev) => ({ ...prev, isOpen: false }))}
+        />
+      )}
     </main>
   );
 }
